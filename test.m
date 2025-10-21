@@ -51,6 +51,7 @@ function test()
             lastCheck = tic;
             try
                 dist = brick.UltrasonicDist(1);
+                colorVal = brick.ColorCode(2);
             catch
                 dist = 999;
             end
@@ -110,6 +111,16 @@ function test()
                     disp('✅ Path clear on right, continuing...');
                 end
             end
+
+            % If color is black
+            if colorVal == 1
+                brick.STopMotor('AD', 'Brake');
+                brick.beep();
+                disp('Black surface detected, stopping');
+                pause(0.5);
+            end
+
+
         end
 
         % --- Manual control ---
