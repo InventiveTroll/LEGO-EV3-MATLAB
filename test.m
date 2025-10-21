@@ -15,7 +15,7 @@ function test()
     % --- Parameters ---
     speed = 50;               % Driving motor speed
     speedB = 11;              % Motor B speed (separate key)
-    distanceThreshold = 20;   % cm — obstacle detection
+    distanceThreshold = 15;   % cm — obstacle detection
     checkPause = 0.3;         % seconds between sensor checks
     turnDuration = 0.5;       % seconds to test direction
     backupDuration = 0.5;     % reverse duration if stuck
