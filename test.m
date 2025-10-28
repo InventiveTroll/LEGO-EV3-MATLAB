@@ -13,7 +13,7 @@ function test()
     end
 
     % --- Parameters ---
-    speed = 50;               % Driving motor speed
+    speed = 30;               % Driving motor speed
     speedB = 11;              % Motor B speed (separate key)
     distanceThreshold = 1;   % cm — obstacle detection
     checkPause = 0.3;         % seconds between sensor checks
@@ -43,7 +43,7 @@ function test()
     lastCheck = tic;
 
     % --- Setup Color Sensor ---
-    brick.setColorMode(3, 2)
+    brick.SetColorMode(3, 2)
 
     % --- Main loop ---
     while ishandle(hFig) && getappdata(hFig, 'running')
@@ -116,27 +116,27 @@ function test()
             end
 
 switch colorVal
-                case 5  % Red detected
-                    brick.StopMotor('AD', 'Brake');
-                    disp('🔴 Red detected — stopping for 1 second.');
-                    pause(1);
+    case 5  % Red detected
+        brick.StopMotor('AD', 'Brake');
+        disp('🔴 Red detected — stopping for 1 second.');
+        pause(1);
 
-                case 2  % Blue detected
-                    brick.StopMotor('AD', 'Brake');
-                    disp('🔵 Blue detected — stopping and beeping 2 times.');
-                    for i = 1:2
-                        brick.beep();
-                        pause(0.3);
-                    end
+    case 2  % Blue detected
+        brick.StopMotor('AD', 'Brake');
+        disp('🔵 Blue detected — stopping and beeping 2 times.');
+        for i = 1:2
+            brick.beep();
+            pause(0.3);
+        end
 
-                case 3  % Green detected
-                    brick.StopMotor('AD', 'Brake');
-                    disp('🟢 Green detected — stopping and beeping 3 times.');
-                    for i = 1:3
-                        brick.beep();
-                        pause(0.3);
-                    end
-            end
+    case 3  % Green detected
+        brick.StopMotor('AD', 'Brake');
+        disp('🟢 Green detected — stopping and beeping 3 times.');
+        for i = 1:3
+            brick.beep();
+            pause(0.3);
+        end
+end
         end
 
         % --- Manual control ---
