@@ -167,10 +167,14 @@ end
                     brick.StopAllMotors('Brake');
 
                 case '-'
-                    speed = (speed >= 0 + speedIncrement) ? speed - speedIncrement : 0;
+                    if (speed >= 0 + speedIncrement)
+                        speed -= speedIncrement;
+                    end
 
                 case '='
-                    speed = speed = (speed <= 100 - speedIncrement) ? speed + speedIncrement : 100;
+                    if (speed <= 0 - speedIncrement)
+                        speed += speedIncrement;
+                    end
 
                 case {'q','Q'}
                     stopAndCleanup();
