@@ -42,6 +42,9 @@ function test()
 
     lastCheck = tic;
 
+    % --- Setup Color Sensor ---
+    brick.setColorMode(3, 2)
+
     % --- Main loop ---
     while ishandle(hFig) && getappdata(hFig, 'running')
         key = getappdata(hFig, 'key');
@@ -51,7 +54,7 @@ function test()
             lastCheck = tic;
             try
                 dist = brick.UltrasonicDist(1);
-                colorVal = brick.ColorCode(2);
+                colorVal = brick.ColorCode(3);
             catch
                 dist = 999;
             end
@@ -113,12 +116,12 @@ function test()
             end
 
 switch colorVal
-                case RED  % Red detected
+                case 5  % Red detected
                     brick.StopMotor('AD', 'Brake');
                     disp('🔴 Red detected — stopping for 1 second.');
                     pause(1);
 
-                case BLUE  % Blue detected
+                case 2  % Blue detected
                     brick.StopMotor('AD', 'Brake');
                     disp('🔵 Blue detected — stopping and beeping 2 times.');
                     for i = 1:2
@@ -126,7 +129,7 @@ switch colorVal
                         pause(0.3);
                     end
 
-                case GREEN  % Green detected
+                case 3  % Green detected
                     brick.StopMotor('AD', 'Brake');
                     disp('🟢 Green detected — stopping and beeping 3 times.');
                     for i = 1:3
