@@ -20,6 +20,8 @@ function test()
     turnDuration = 0.5;       % seconds to test direction
     backupDuration = 0.5;     % reverse duration if stuck
 
+    speedIncrement = 10;
+
     % --- Setup GUI ---
     hFig = figure('Name', 'EV3 Remote Control', ...
         'NumberTitle', 'off', ...
@@ -163,7 +165,13 @@ end
                     
                 case 'space'
                     brick.StopAllMotors('Brake');
-                    
+
+                case '-'
+                    speed = (speed >= 0 + speedIncrement) ? speed - speedIncrement : 0;
+
+                case '='
+                    speed = speed = (speed <= 100 - speedIncrement) ? speed + speedIncrement : 100;
+
                 case {'q','Q'}
                     stopAndCleanup();
                     return;
