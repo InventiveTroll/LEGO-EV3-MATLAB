@@ -7,15 +7,15 @@ function test()
     try
         brick = ConnectBrick('ACCESOR');
         brick.beep();
-        disp('✅ Connected to EV3 Brick!');
+        disp(' Connected to EV3 Brick!');
     catch ME
-        error('❌ Could not connect to EV3 brick: %s', ME.message);
+        error(' Could not connect to EV3 brick: %s', ME.message);
     end
 
     % --- Parameters ---
     speed = 50;               % Driving motor speed
     speedB = 11;              % Motor B speed (separate key)
-    distanceThreshold = 15;   % cm — obstacle detection
+    distanceThreshold = 1;   % cm — obstacle detection
     checkPause = 0.3;         % seconds between sensor checks
     turnDuration = 0.5;       % seconds to test direction
     backupDuration = 0.5;     % reverse duration if stuck
@@ -105,22 +105,35 @@ function test()
                         pause(turnDuration);
                         brick.StopMotor('AD', 'Brake');
                     else
-                        disp('✅ Path clear on left, continuing...');
+                        disp(' Path clear on left, continuing...');
                     end
                 else
-                    disp('✅ Path clear on right, continuing...');
+                    disp(' Path clear on right, continuing...');
                 end
             end
 
-            % If color is black
-            if colorVal == 1
-                brick.STopMotor('AD', 'Brake');
-                brick.beep();
-                disp('Black surface detected, stopping');
-                pause(0.5);
+switch colorVal
+                case RED  % Red detected
+                    brick.StopMotor('AD', 'Brake');
+                    disp('🔴 Red detected — stopping for 1 second.');
+                    pause(1);
+
+                case BLUE  % Blue detected
+                    brick.StopMotor('AD', 'Brake');
+                    disp('🔵 Blue detected — stopping and beeping 2 times.');
+                    for i = 1:2
+                        brick.beep();
+                        pause(0.3);
+                    end
+
+                case GREEN  % Green detected
+                    brick.StopMotor('AD', 'Brake');
+                    disp('🟢 Green detected — stopping and beeping 3 times.');
+                    for i = 1:3
+                        brick.beep();
+                        pause(0.3);
+                    end
             end
-
-
         end
 
         % --- Manual control ---
@@ -129,33 +142,39 @@ function test()
                 case 'uparrow'
                     brick.MoveMotor('A', -speed);
                     brick.MoveMotor('D', -speed);
+                    
                 case 'downarrow'
                     brick.MoveMotor('A', speed);
                     brick.MoveMotor('D', speed);
+                    
                 case 'leftarrow'
                     brick.MoveMotor('A', -speed);
                     brick.MoveMotor('D', speed);
+                    
                 case 'rightarrow'
                     brick.MoveMotor('A', speed);
                     brick.MoveMotor('D', -speed);
+                   
                 case 'b'
                     brick.MoveMotor('B', speedB);
+                    
                 case 'space'
                     brick.StopAllMotors('Brake');
+                    
                 case {'q','Q'}
                     stopAndCleanup();
                     return;
                 case 'escape'
                     brick.StopAllMotors();
                     brick.beep();
-                    disp('⚠️ KILL SWITCH ACTIVATED');
+                    disp('KILL SWITCH ACTIVATED');
                     stopAndCleanup();
                     return;
                 otherwise
                     brick.StopMotor('AD', 'Brake');
             end
         catch ME
-            disp(['⚠️ Motor command failed: ' ME.message]);
+            disp([' Motor command failed: ' ME.message]);
         end
 
         pause(0.05);
@@ -180,7 +199,7 @@ function test()
             try
                 brick.StopAllMotors();
                 brick.beep();
-                disp('🛑 Motors stopped and brick cleaned up.');
+                disp(' Motors stopped and brick cleaned up.');
             catch
             end
             pause(0.2);
