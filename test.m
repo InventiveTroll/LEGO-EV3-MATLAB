@@ -13,8 +13,7 @@ function test()
     end
 
     % --- Parameters ---
-    speed = 30;               % Driving motor speed
-    speedB = 11;              % Motor B speed (separate key)
+    speed = 30;               % Driving motor speed              % Motor B speed (separate key)
     distanceThreshold = 1;   % cm — obstacle detection
     checkPause = 0.3;         % seconds between sensor checks
     turnDuration = 0.5;       % seconds to test direction
@@ -160,20 +159,29 @@ end
                     brick.MoveMotor('A', speed);
                     brick.MoveMotor('D', -speed);
                    
-                case 'b'
-                    brick.MoveMotor('B', speedB);
+  case 'k'
+                    % Lift up (forklift motor on Port 2)
+                    brick.MoveMotor('2', -40); % Negative direction = up (adjust if opposite)
+                    disp('Forklift lifting up...');
+
+                case 'l'
+                    % Lower down
+                    brick.MoveMotor('2', 40); % Positive direction = down (adjust if opposite)
+                    disp('Forklift lowering down...');
                     
                 case 'space'
                     brick.StopAllMotors('Brake');
 
-                case '-'
+                case 's'
                     if (speed >= 0 + speedIncrement)
-                        speed -= speedIncrement;
+                        speed = speed - speedIncrement;
+                        disp('Speed decreased to ' + string(speed));
                     end
 
-                case '='
-                    if (speed <= 0 - speedIncrement)
-                        speed += speedIncrement;
+                case 'w'
+                    if (speed <= 100 - speedIncrement)
+                        speed = speed + speedIncrement;
+                        disp('Speed increased to ' + string(speed));
                     end
 
                 case {'q','Q'}
