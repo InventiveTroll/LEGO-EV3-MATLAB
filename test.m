@@ -19,6 +19,7 @@ function test()
     turnDuration = 0.5;       % seconds to test direction
     backupDuration = 0.5;     % reverse duration if stuck
     speedIncrement = 10;
+    turnFactor = 100;
 
     % --- Setup GUI ---
     hFig = figure('Name', 'EV3 Remote Control', ...
@@ -74,47 +75,10 @@ function test()
                     % Try turning right
                     brick.MoveMotor('A', speed);
                     brick.MoveMotor('D', -speed);
-                    pause(turnDuration);
+                    pause(turnFactor / speed);
                     brick.StopMotor('AD', 'Brake');
                     pause(0.2);
-    
-                    % Recheck
-                    try
-                        distAfterRight = brick.UltrasonicDist(1);
-                    catch
-                        distAfterRight = 999;
-                    end
-    
-                    if distAfterRight < distanceThreshold
-                        disp('Right blocked → trying left...');
-                        % Turn left instead
-                        brick.MoveMotor('A', -speed);
-                        brick.MoveMotor('D', speed);
-                        pause(turnDuration * 2);
-                        brick.StopMotor('AD', 'Brake');
-                        pause(0.2);
-    
-                        try
-                            distAfterLeft = brick.UltrasonicDist(1);
-                        catch
-                            distAfterLeft = 999;
-                        end
-    
-                        if distAfterLeft < distanceThreshold
-                            disp('Front + both sides blocked → backing up...');
-                            % Backup and turn right
-                            brick.MoveMotor('A', speed);
-                            brick.MoveMotor('D', speed);
-                            pause(backupDuration);
-                            brick.MoveMotor('A', speed);
-                            brick.MoveMotor('D', -speed);
-                            pause(turnDuration);
-                            brick.StopMotor('AD', 'Brake');
-                        else
-                            disp('Path clear on left, continuing...');
-                        end
-                    else
-                        disp('Path clear on right, continuing...');
+
                     end
                 else
                     brick.MoveMotor('A', -speed);
