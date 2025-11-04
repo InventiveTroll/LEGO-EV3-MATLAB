@@ -41,7 +41,7 @@ function test()
     setappdata(hFig, 'running', true);
 
     lastCheck = tic;
-    auto = false;
+    auto = true;
 
     % --- Setup Color Sensor ---
     brick.SetColorMode(3, 2);
@@ -175,7 +175,7 @@ function test()
 
                 case 'l'
                     % Lower down
-                    brick.MoveMotor('B2', 40); % Positive direction = down (adjust if opposite)
+                    brick.MoveMotor('B', 40); % Positive direction = down (adjust if opposite)
                     disp('Forklift lowering down...');
 
                 case 'space'
