@@ -230,6 +230,6 @@ function test()
             close(hFig);
         end
         clear brick;
-        disp('🔌 Disconnected from EV3 safely.');
+        disp(' Disconnected from EV3 safely.');
     end
 end
