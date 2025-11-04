@@ -204,6 +204,13 @@ function test()
                     stopAndCleanup();
                     return;
 
+                case 'a'
+                    if (auto)
+                        auto = false;
+                    else
+                        auto = true;
+                    end
+
                 otherwise
                     brick.StopMotor('AD', 'Brake');
             end
