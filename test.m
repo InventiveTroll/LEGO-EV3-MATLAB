@@ -32,8 +32,9 @@ function test()
     axis off;
     text(0.5, 0.5, ...
         sprintf(['Use Arrow Keys to Drive\n' ...
-                 'B = Run Motor B\n' ...
-                 'Space = Stop | Q = Quit | Esc = Kill Switch\n' ...
+                 'K = Lift (Hold)\n' ...
+                 'L = Lower (Hold)\n' ...
+                 'Space = Stop | W/S = Speed ± | Q = Quit | Esc = Kill Switch\n' ...
                  'Ultrasonic: Port 1 | Color: Port 2 (optional)']), ...
         'HorizontalAlignment', 'center', 'FontSize', 12);
 
@@ -158,16 +159,6 @@ function test()
                     brick.MoveMotor('A', speed);
                     brick.MoveMotor('D', -speed);
 
-                case 'k'
-                    % Lift up (forklift motor on Port 2)
-                    brick.MoveMotor('2', -40); % Negative direction = up (adjust if opposite)
-                    disp('Forklift lifting up...');
-
-                case 'l'
-                    % Lower down
-                    brick.MoveMotor('2', 40); % Positive direction = down (adjust if opposite)
-                    disp('Forklift lowering down...');
-
                 case 'space'
                     brick.StopAllMotors('Brake');
 
@@ -206,11 +197,33 @@ function test()
 
     % --- Nested helper functions ---
     function keyDown(~, event)
-        setappdata(hFig, 'key', event.Key);
+        key = event.Key;
+        setappdata(hFig, 'key', key);
+
+        % Handle forklift controls directly on key press
+        switch key
+            case 'k'
+                % Lift up while key is held
+                brick.MoveMotor('2', -40);
+                disp('Forklift lifting up...');
+
+            case 'l'
+                % Lower down while key is held
+                brick.MoveMotor('2', 40);
+                disp('Forklift lowering down...');
+        end
     end
 
-    function keyUp(~, ~)
+    function keyUp(~, event)
+        key = event.Key;
         setappdata(hFig, 'key', '');
+
+        % Stop forklift motor immediately when released
+        switch key
+            case {'k', 'l'}
+                brick.StopMotor('2', 'Brake');
+                disp('Forklift stopped.');
+        end
     end
 
     function onClose(~, ~)
