@@ -116,6 +116,10 @@ function test()
                     else
                         disp('Path clear on right, continuing...');
                     end
+                else
+                    brick.MoveMotor('A', -speed);
+                    brick.MoveMotor('D', -speed);
+                    pause(0.3)
                 end
     
                 switch colorVal
@@ -140,10 +144,7 @@ function test()
                             pause(0.3);
                         end
                 end
-            else
-                brick.MoveMotor('A', -speed);
-                brick.MoveMotor('D', -speed);
-                pause(0.3)
+            
             end
         end
 
