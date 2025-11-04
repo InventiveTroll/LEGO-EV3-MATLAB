@@ -13,13 +13,13 @@ function test()
     end
 
     % --- Parameters ---
-    speed = 30;               % Driving motor speed
+    speed = 50;               % Driving motor speed
     distanceThreshold = 20;    % cm — obstacle detection
     checkPause = 0.3;         % seconds between sensor checks
     turnDuration = 0.5;       % seconds to test direction
     backupDuration = 0.5;     % reverse duration if stuck
     speedIncrement = 10;
-    turnFactor = 100;
+    turnFactor = 300;
 
     % --- Setup GUI ---
     hFig = figure('Name', 'EV3 Remote Control', ...
@@ -79,7 +79,6 @@ function test()
                     brick.StopMotor('AD', 'Brake');
                     pause(0.2);
 
-                    end
                 else
                     brick.MoveMotor('A', -speed);
                     brick.MoveMotor('D', -speed);
