@@ -154,12 +154,12 @@ function test()
                 case '1'
                     brick.ResetMotorAngle('B');
                     disp('Forklift grabbing');
-                    brick.MoveMotorAngleAbs('B', 40, 180);
+                    brick.MoveMotorAngleAbs('B', 40, 180*5);
                     brick.WaitForMotor('B');
                 case '2'
                     brick.ResetMotorAngle('B');
                     disp('Forklift letting go');
-                    brick.MoveMotorAngleAbs('B', 40, -180);
+                    brick.MoveMotorAngleAbs('B', 40, -180*5);
                     brick.WaitForMotor('B');
 
 
