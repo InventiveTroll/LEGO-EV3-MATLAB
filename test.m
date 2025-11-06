@@ -45,6 +45,7 @@ function test()
 
     lastCheck = tic;
     auto = false; % start in manual mode
+    forkliftOpen = true;
 
     % --- Setup Color Sensor ---
     brick.SetColorMode(3, 2);
@@ -152,18 +153,19 @@ function test()
                     pause(0.4);  % adjust time for lower distance
                     brick.StopMotor('B', 'Brake');
                 case '1'
-                    brick.ResetMotorAngle('B');
-                    disp('Forklift grabbing');
-                    brick.MoveMotorAngleAbs('B', 50, 180*12);
-                    brick.WaitForMotor('B');
-                case '2'
-                    brick.ResetMotorAngle('B');
-                    disp('Forklift letting go');
-                    brick.MoveMotorAngleAbs('B', 50, -180*12);
-                    brick.WaitForMotor('B');
-
-
-
+                    if (forkliftOpen)
+                        forkliftOpen = false;
+                        brick.ResetMotorAngle('B');
+                        disp('Forklift grabbing');
+                        brick.MoveMotorAngleAbs('B', 50, 180*12);
+                        brick.WaitForMotor('B');
+                    else
+                        forkliftOpen = true;
+                        brick.ResetMotorAngle('B');
+                        disp('Forklift letting go');
+                        brick.MoveMotorAngleAbs('B', 50, -180*12);
+                        brick.WaitForMotor('B');
+                    end
                 case 'space'
                     brick.StopAllMotors('Brake');
 
