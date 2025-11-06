@@ -139,12 +139,19 @@ function test()
                     brick.MoveMotor('D', -speed);
 
                 case 'k'
+                    % Forklift up (short pulse)
+                    disp('⬆️ Forklift lifting up...');
                     brick.MoveMotor('B', -40);
-                    disp('Forklift lifting up...');
+                    pause(0.4);  % adjust time for lift height
+                    brick.StopMotor('B', 'Brake');
 
                 case 'l'
+                    % Forklift down (short pulse)
+                    disp('⬇️ Forklift lowering down...');
                     brick.MoveMotor('B', 40);
-                    disp('Forklift lowering down...');
+                    pause(0.4);  % adjust time for lower distance
+                    brick.StopMotor('B', 'Brake');
+
 
                 case 'space'
                     brick.StopAllMotors('Brake');
