@@ -7,19 +7,18 @@ function test()
     try
         brick = ConnectBrick('ACCESOR');
         brick.beep();
-        disp(' Connected to EV3 Brick!');
+        disp('✅ Connected to EV3 Brick!');
     catch ME
-        error(' Could not connect to EV3 brick: %s', ME.message);
+        error('❌ Could not connect to EV3 brick: %s', ME.message);
     end
 
     % --- Parameters ---
     speed = 50;               % Driving motor speed
-    distanceThreshold = 20;    % cm — obstacle detection
+    distanceThreshold = 20;   % cm — obstacle detection
     checkPause = 0.3;         % seconds between sensor checks
-    turnDuration = 0.5;       % seconds to test direction
+    turnDuration = 0.8;       % time to turn ~90 degrees
     backupDuration = 0.5;     % reverse duration if stuck
     speedIncrement = 10;
-    turnFactor = 300;
 
     % --- Setup GUI ---
     hFig = figure('Name', 'EV3 Remote Control', ...
@@ -33,7 +32,10 @@ function test()
     axis off;
     text(0.5, 0.5, ...
         sprintf(['Use Arrow Keys to Drive\n' ...
+                 'K/L = Forklift Up/Down\n' ...
+                 'W/S = Speed +/-\n' ...
                  'B = Run Motor B\n' ...
+                 'A = Toggle Auto Mode\n' ...
                  'Space = Stop | Q = Quit | Esc = Kill Switch\n' ...
                  'Ultrasonic: Port 1 | Color: Port 2 (optional)']), ...
         'HorizontalAlignment', 'center', 'FontSize', 12);
@@ -42,7 +44,7 @@ function test()
     setappdata(hFig, 'running', true);
 
     lastCheck = tic;
-    auto = true;
+    auto = false; % start in manual mode
 
     % --- Setup Color Sensor ---
     brick.SetColorMode(3, 2);
@@ -51,69 +53,73 @@ function test()
     while ishandle(hFig) && getappdata(hFig, 'running')
         key = getappdata(hFig, 'key');
 
-        % --- Check if car is in autonomous mode --- 
+        % --- Autonomous Navigation (Right-first Maze Solver) ---
         if auto
-            % --- Sensor check every 0.3s ---
             if toc(lastCheck) > checkPause
                 lastCheck = tic;
                 try
                     dist = brick.UltrasonicDist(1);
-                    colorVal = brick.ColorCode(3);
                 catch
                     dist = 999;
                 end
     
-                % If object too close in front
                 if dist > 0 && dist < distanceThreshold
-                    disp(['Obstacle detected at ' num2str(dist) ' cm!']);
-    
-                    % Stop
+                    disp(['🚧 Obstacle detected at ' num2str(dist) ' cm']);
                     brick.StopMotor('AD', 'Brake');
                     brick.beep();
                     pause(0.2);
     
-                    % Try turning right
+                    % --- Try turning right first ---
                     brick.MoveMotor('A', speed);
                     brick.MoveMotor('D', -speed);
-                    pause(turnFactor / speed);
+                    pause(turnDuration);
                     brick.StopMotor('AD', 'Brake');
                     pause(0.2);
-
+    
+                    % Check again
+                    try
+                        newDist = brick.UltrasonicDist(1);
+                    catch
+                        newDist = 999;
+                    end
+    
+                    if newDist > distanceThreshold
+                        disp('✅ Path clear to the right — proceeding.');
+                    else
+                        disp('❌ Right blocked, turning left...');
+                        % Turn left past original heading
+                        brick.MoveMotor('A', -speed);
+                        brick.MoveMotor('D', speed);
+                        pause(turnDuration * 2); % about 180° total
+                        brick.StopMotor('AD', 'Brake');
+                        pause(0.2);
+    
+                        try
+                            newDist = brick.UltrasonicDist(1);
+                        catch
+                            newDist = 999;
+                        end
+    
+                        if newDist > distanceThreshold
+                            disp('✅ Path clear to the left — proceeding.');
+                        else
+                            disp('⚠️ Both sides blocked — backing up.');
+                            brick.MoveMotor('A', speed);
+                            brick.MoveMotor('D', speed);
+                            pause(backupDuration);
+                            brick.StopMotor('AD', 'Brake');
+                            pause(0.2);
+                        end
+                    end
                 else
+                    % Path clear, move forward
                     brick.MoveMotor('A', -speed);
                     brick.MoveMotor('D', -speed);
-                    pause(0.3)
                 end
-    
-                switch colorVal
-                    case 5  % Red detected
-                        brick.StopMotor('AD', 'Brake');
-                        disp('🔴 Red detected — stopping for 1 second.');
-                        pause(1);
-    
-                    case 2  % Blue detected
-                        brick.StopMotor('AD', 'Brake');
-                        disp('🔵 Blue detected — stopping and beeping 2 times.');
-                        for i = 1:2
-                            brick.beep();
-                            pause(0.3);
-                        end
-    
-                    case 3  % Green detected
-                        brick.StopMotor('AD', 'Brake');
-                        disp('🟢 Green detected — stopping and beeping 3 times.');
-                        for i = 1:3
-                            brick.beep();
-                            pause(0.3);
-                        end
-                end
-            
             end
         end
 
-        
-
-        % --- Manual control ---
+        % --- Manual Control ---
         try
             switch key
                 case 'uparrow'
@@ -133,13 +139,11 @@ function test()
                     brick.MoveMotor('D', -speed);
 
                 case 'k'
-                    % Lift up (forklift motor on Port 2)
-                    brick.MoveMotor('B', -40); % Negative direction = up (adjust if opposite)
+                    brick.MoveMotor('B', -40);
                     disp('Forklift lifting up...');
 
                 case 'l'
-                    % Lower down
-                    brick.MoveMotor('B', 40); % Positive direction = down (adjust if opposite)
+                    brick.MoveMotor('B', 40);
                     disp('Forklift lowering down...');
 
                 case 'space'
@@ -148,13 +152,13 @@ function test()
                 case 's'
                     if (speed >= 0 + speedIncrement)
                         speed = speed - speedIncrement;
-                        disp('Speed decreased to ' + string(speed));
+                        disp(['Speed decreased to ' num2str(speed)]);
                     end
 
                 case 'w'
                     if (speed <= 100 - speedIncrement)
                         speed = speed + speedIncrement;
-                        disp('Speed increased to ' + string(speed));
+                        disp(['Speed increased to ' num2str(speed)]);
                     end
 
                 case {'q', 'Q'}
@@ -164,19 +168,27 @@ function test()
                 case 'escape'
                     brick.StopAllMotors();
                     brick.beep();
-                    disp('KILL SWITCH ACTIVATED');
+                    disp('🛑 KILL SWITCH ACTIVATED');
                     stopAndCleanup();
                     return;
 
                 case 'a'
-                    if (auto)
-                        auto = false;
+                    auto = ~auto;
+                    if auto
+                        brick.beep();
+                        disp('🤖 AUTO MODE: ON');
                     else
-                        auto = true;
+                        brick.beep();
+                        pause(0.2);
+                        brick.beep();
+                        disp('🕹️ AUTO MODE: OFF (Manual Control)');
+                        brick.StopAllMotors('Brake');
                     end
 
                 otherwise
-                    brick.StopMotor('AD', 'Brake');
+                    if ~auto
+                        brick.StopMotor('AD', 'Brake');
+                    end
             end
         catch ME
             disp(['Motor command failed: ' ME.message]);
