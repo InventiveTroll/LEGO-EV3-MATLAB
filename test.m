@@ -151,6 +151,17 @@ function test()
                     brick.MoveMotor('B', 40);
                     pause(0.4);  % adjust time for lower distance
                     brick.StopMotor('B', 'Brake');
+                case '1'
+                    brick.ResetMotorAngle('B');
+                    disp('Forklift grabbing');
+                    brick.MoveMotorAngleAbs('B', 40, 90, 'Brake');
+                    brick.WaitForMotor('B');
+                case '2'
+                    brick.ResetMotorAngle('B');
+                    disp('Forklift letting go');
+                    brick.MoveMotorAngleAbs('B', 40, -90, 'Brake');
+                    brick.WaitForMotor('B');
+
 
 
                 case 'space'
