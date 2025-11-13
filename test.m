@@ -60,12 +60,13 @@ function test()
                 lastCheck = tic;
                 try
                     dist = brick.UltrasonicDist(1);
+                    touch = brick.TouchPressed(2);
                 catch
                     dist = 999;
                 end
     
-                if dist > 0 && dist < distanceThreshold
-                    disp(['🚧 Obstacle detected at ' num2str(dist) ' cm']);
+                if dist > distanceThreshold
+                    disp(['Opening detected (' num2str(dist) ' cm)']);
                     brick.StopMotor('AD', 'Brake');
                     brick.beep();
                     pause(0.2);
@@ -76,46 +77,19 @@ function test()
                     pause(turnDuration);
                     brick.StopMotor('AD', 'Brake');
                     pause(0.2);
-    
-                    % Check again
-                    try
-                        newDist = brick.UltrasonicDist(1);
-                    catch
-                        newDist = 999;
-                    end
-    
-                    if newDist > distanceThreshold
-                        disp('✅ Path clear to the right — proceeding.');
-                    else
-                        disp('❌ Right blocked, turning left...');
-                        % Turn left past original heading
+                else
+                    if touch
+                        % --- Turn left ---
                         brick.MoveMotor('A', -speed);
                         brick.MoveMotor('D', speed);
-                        pause(turnDuration * 2); % about 180° total
+                        pause(turnDuration);
                         brick.StopMotor('AD', 'Brake');
                         pause(0.2);
-    
-                        try
-                            newDist = brick.UltrasonicDist(1);
-                        catch
-                            newDist = 999;
-                        end
-    
-                        if newDist > distanceThreshold
-                            disp('✅ Path clear to the left — proceeding.');
-                        else
-                            disp('⚠️ Both sides blocked — backing up.');
-                            brick.MoveMotor('A', speed);
-                            brick.MoveMotor('D', speed);
-                            pause(backupDuration);
-                            brick.StopMotor('AD', 'Brake');
-                            pause(0.2);
-                        end
+                    else 
+                        % Path clear, move forward
+                        brick.MoveMotor('A', -speed);
+                        brick.MoveMotor('D', -speed);
                     end
-                else
-                    % Path clear, move forward
-                    brick.MoveMotor('A', -speed);
-                    brick.MoveMotor('D', -speed);
                 end
             end
         end
