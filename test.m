@@ -14,9 +14,9 @@ function test()
 
     % --- Parameters ---
     speed = 50;               % Driving motor speed
-    distanceThreshold = 20;   % cm — obstacle detection
+    distanceThreshold = 40;   % cm — obstacle detection
     checkPause = 0.3;         % seconds between sensor checks
-    turnDuration = 0.8;       % time to turn ~90 degrees
+    turnDuration = 0.9;       % time to turn ~90 degrees
     backupDuration = 0.5;     % reverse duration if stuck
     speedIncrement = 10;
 
@@ -49,6 +49,8 @@ function test()
 
     % --- Setup Color Sensor ---
     brick.SetColorMode(3, 2);
+    pastColor = -1;
+    color = brick.ColorCode(3);
 
     % --- Main loop ---
     while ishandle(hFig) && getappdata(hFig, 'running')
@@ -61,8 +63,18 @@ function test()
                 try
                     dist = brick.UltrasonicDist(1);
                     touch = brick.TouchPressed(2);
+                    color = brick.ColorCode(3);
                 catch
                     dist = 999;
+                end
+
+                if color == 5 && color ~= pastColor
+                    disp('Red detected - Stopping');
+                    brick.StopMotor('AD', 'Brake');
+                    pastColor = color;
+                    brick.beep();
+                    pause(1);
+                    continue;
                 end
     
                 if dist > distanceThreshold
@@ -72,11 +84,19 @@ function test()
                     pause(0.2);
     
                     % --- Try turning right first ---
+                    brick.StopMotor('AD', 'Brake');
+                    brick.MoveMotor('A', -speed);
+                    brick.MoveMotor('D', -speed);
+                    pause(0.5);
+
                     brick.MoveMotor('A', speed);
                     brick.MoveMotor('D', -speed);
                     pause(turnDuration);
                     brick.StopMotor('AD', 'Brake');
                     pause(0.2);
+
+                    brick.MoveMotor('A', -speed);
+                    brick.MoveMotor('D', -speed);
                 else
                     if touch
                         % --- Turn left ---
@@ -91,6 +111,8 @@ function test()
                         brick.MoveMotor('D', -speed);
                     end
                 end
+
+                pastColor = color;
             end
         end
 
