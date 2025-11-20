@@ -14,9 +14,9 @@ function test()
 
     % --- Parameters ---
     speed = 50;               % Driving motor speed
-    distanceThreshold = 40;   % cm — obstacle detection
+    distanceThreshold = 60;   % cm — obstacle detection
     checkPause = 0.3;         % seconds between sensor checks
-    turnDuration = 0.9;       % time to turn ~90 degrees
+    turnDuration = 0.88;       % time to turn ~90 degrees
     backupDuration = 0.5;     % reverse duration if stuck
     speedIncrement = 10;
 
@@ -46,6 +46,7 @@ function test()
     lastCheck = tic;
     auto = false; % start in manual mode
     forkliftOpen = true;
+    lastDistanceCheck = 0;
 
     % --- Setup Color Sensor ---
     brick.SetColorMode(3, 2);
@@ -62,7 +63,7 @@ function test()
                 lastCheck = tic;
                 try
                     dist = brick.UltrasonicDist(1);
-                    touch = brick.TouchPressed(2);
+                    touch = brick.TouchPressed(2) && brick.TouchPressed(4);
                     color = brick.ColorCode(3);
                 catch
                     dist = 999;
@@ -72,6 +73,27 @@ function test()
                     disp('Red detected - Stopping');
                     brick.StopMotor('AD', 'Brake');
                     pastColor = color;
+                    brick.beep();
+                    pause(1);
+                    continue;
+                end
+
+                if color == 2 && color ~= pastColor
+                    disp('Blue detected');
+                    brick.StopMotor('AD', 'Brake');
+                    pastColor = color;
+                    brick.beep();
+                    brick.beep();
+                    pause(1);
+                    continue;
+                end
+
+                if color == 3 && color ~= pastColor
+                    disp('Green detected');
+                    brick.StopMotor('AD', 'Brake');
+                    pastColor = color;
+                    brick.beep();
+                    brick.beep();
                     brick.beep();
                     pause(1);
                     continue;
@@ -97,16 +119,39 @@ function test()
 
                     brick.MoveMotor('A', -speed);
                     brick.MoveMotor('D', -speed);
+
+                    pause(3); % Move forward a bit to clear the intersection and prevent repeated turning
+                    lastDistanceCheck = brick.UltrasonicDist(1);
                 else
                     if touch
+                        pause(0.5); % Make sure robot is pushed up against the wall
+
+                        % --- Back up first ---
+                        brick.MoveMotor('A', speed);
+                        brick.MoveMotor('D', speed);
+                        pause(backupDuration);
+                        brick.StopMotor('AD', 'Brake');
+                        pause(0.2);
+
                         % --- Turn left ---
                         brick.MoveMotor('A', -speed);
                         brick.MoveMotor('D', speed);
                         pause(turnDuration);
                         brick.StopMotor('AD', 'Brake');
                         pause(0.2);
+
+                        lastDistanceCheck = brick.UltrasonicDist(1);
                     else 
                         % Path clear, move forward
+
+                        % Adjust motors to make vehicle move straighter
+                        if (dist - lastDistanceCheck) > 2
+                            % Veering away from wall, turn slightly towards it
+                            brick.MoveMotor('A', -speed + 5);
+                            brick.MoveMotor('D', -speed);
+                            pause(0.1);
+                            lastDistanceCheck = dist;
+                        end
                         brick.MoveMotor('A', -speed);
                         brick.MoveMotor('D', -speed);
                     end
