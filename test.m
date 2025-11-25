@@ -264,8 +264,8 @@ function test()
                         % Adjust motors to make vehicle move straighter
                         if (dist < 5)
                             % move away from wall
-                            brick.MoveMotor('A', -speed - 5);
-                                brick.MoveMotor('D', -speed + 5);
+                            brick.MoveMotor('A', -speed - 10);
+                                brick.MoveMotor('D', -speed + 10);
                                 pause(1);
                                 lastDistanceCheck = dist;
                         end
@@ -273,16 +273,16 @@ function test()
                         if (dist - lastDistanceCheck) > 1
                             brick.StopMotor('AD', 'Brake');
                             % Veering away from wall, turn slightly towards it
-                            brick.MoveMotor('A', -speed + 5);
-                            brick.MoveMotor('D', -speed - 5);
+                            brick.MoveMotor('A', -speed + 10);
+                            brick.MoveMotor('D', -speed - 10);
                             pause(1);
                             lastDistanceCheck = dist;
                         else 
                             if (lastDistanceCheck - dist) > 1
                                 brick.StopMotor('AD', 'Brake');
                                 % Veering towards wall, turn slightly away from it
-                                brick.MoveMotor('A', -speed - 5);
-                                brick.MoveMotor('D', -speed + 5);
+                                brick.MoveMotor('A', -speed - 10);
+                                brick.MoveMotor('D', -speed + 10);
                                 pause(1);
                                 lastDistanceCheck = dist;
                             end
@@ -330,3 +330,4 @@ function test()
         disp('🔌 Disconnected from EV3 safely.');
     end
 end
+
