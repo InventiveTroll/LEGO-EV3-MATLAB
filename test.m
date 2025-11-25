@@ -177,17 +177,27 @@ function test()
                     continue;
                 end
 
+                if color == 4 && color ~= pastColor
+                    disp('Yellow detected');
+                    
+                    brick.StopMotor('AD', 'Brake');
+                    pastColor = color;
+                    brick.beep();
+                    pause(1);
+                    continue;
+                end
+
                 if color == 2 && color ~= pastColor
                     disp('Blue detected');
+                    if ~hasPassenger
+                        disp('No passenger inside, setting to manual mode to pick up passenger');
+                        auto = false;
+                    end
                     brick.StopMotor('AD', 'Brake');
                     pastColor = color;
                     brick.beep();
                     brick.beep();
                     pause(1);
-                    if ~hasPassenger
-                        auto = false;
-                        disp('Route complete, waiting for new passenger order...');
-                    end
                     continue;
                 end
 
@@ -198,6 +208,9 @@ function test()
                     brick.beep();
                     brick.beep();
                     brick.beep();
+                    if hasPassenger
+                        disp('Dropping off passenger...');
+                    end
                     pause(1);
                     continue;
                 end
