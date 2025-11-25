@@ -47,6 +47,7 @@ function test()
     lastCheck = tic;
     auto = false; % start in manual mode
     forkliftOpen = true;
+    hasPassenger = false;
     lastDistanceCheck = 0;
 
     % --- Setup Color Sensor ---
@@ -160,7 +161,8 @@ function test()
                 lastCheck = tic;
                 try
                     dist = brick.UltrasonicDist(1);
-                    touch = brick.TouchPressed(2) && brick.TouchPressed(4);
+                    touch1 = brick.TouchPressed(2);
+                    touch2 = brick.TouchPressed(4);
                     color = brick.ColorCode(3);
                 catch
                     dist = 999;
@@ -182,6 +184,10 @@ function test()
                     brick.beep();
                     brick.beep();
                     pause(1);
+                    if ~hasPassenger
+                        auto = false;
+                        disp('Route complete, waiting for new passenger order...');
+                    end
                     continue;
                 end
 
@@ -222,7 +228,7 @@ function test()
                     pause(1); % Move forward a bit to clear the intersection and prevent repeated turning
                     lastDistanceCheck = brick.UltrasonicDist(1);
                 else
-                    if touch
+                    if touch1 && touch2
                         pause(0.5); % Make sure robot is pushed up against the wall
 
                         % --- Back up first ---
@@ -241,7 +247,18 @@ function test()
 
                         lastDistanceCheck = brick.UltrasonicDist(1);
                     else 
-                        % Path clear, move forward
+                        if ((touch1 && abs(dist - lastDistanceCheck ) < 0.1)  || (touch2 && abs(dist - lastDistanceCheck ) < 0.1))
+                            % turn 180 degrees if stuck
+                            disp('Stuck detected - Turning 180 degrees');
+                            brick.StopMotor('AD', 'Brake');
+                            brick.MoveMotor('A', -speed);
+                            brick.MoveMotor('D', speed);
+                            pause(turnDuration * 2);
+                            brick.StopMotor('AD', 'Brake');
+                            pause(0.2);
+                            lastDistanceCheck = brick.UltrasonicDist(1);
+                        else
+                            % Path clear, move forward
                         disp([dist, lastDistanceCheck]);
 
                         % Adjust motors to make vehicle move straighter
@@ -273,6 +290,8 @@ function test()
                         brick.MoveMotor('A', -speed);
                         brick.MoveMotor('D', -speed);
                     end
+                        end
+                        
                 end
 
                 pastColor = color;
