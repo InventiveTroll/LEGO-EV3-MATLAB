@@ -179,12 +179,18 @@ function test()
 
                 if color == 4 && color ~= pastColor
                     disp('Yellow detected');
-                    
-                    brick.StopMotor('AD', 'Brake');
-                    pastColor = color;
-                    brick.beep();
-                    pause(1);
-                    continue;
+                    if hasPassenger
+                        disp('Passenger inside, cannot stop ride.');
+                        pastColor = color;
+                        continue;
+                    else 
+                        brick.StopMotor('AD', 'Brake');
+                        pastColor = color;
+                        brick.beep();
+                        pause(1);
+                        continue;
+                    end
+                     
                 end
 
                 if color == 2 && color ~= pastColor
@@ -197,13 +203,13 @@ function test()
                     if (~hasPassenger)
                         disp('No passenger inside, setting to manual mode to pick up passenger');
                         auto = false;
+                        hasPassenger = true;
                         if (~forkliftOpen)
                             forkliftOpen = true;
                             brick.ResetMotorAngle('B');
                             disp('Forklift opening to pick up passenger');
                             brick.MoveMotorAngleAbs('B', 50, -180*18);
                             brick.WaitForMotor('B');
-                            hasPassenger = true;
                         end
                     end
                     continue;
@@ -219,20 +225,26 @@ function test()
                     disp(hasPassenger);
                     if hasPassenger
                         disp('Dropping off passenger...');
+                        hasPassenger = false;
                         if (~forkliftOpen)
+                            disp('Turning 180 degrees');
+                            brick.StopMotor('AD', 'Brake');
+                            brick.MoveMotor('A', -speed);
+                            brick.MoveMotor('D', speed);
+                            pause(turnDuration * 2);
+                            brick.StopMotor('AD', 'Brake');
+                            pause(0.2);
+                            lastDistanceCheck = brick.UltrasonicDist(1);
+
+                            % Open forklift to drop off passenger
                             brick.ResetMotorAngle('B');
                             disp('Forklift dropping off passenger');
-                            brick.MoveMotorAngleAbs('B', 50, 180*18);
+                            brick.MoveMotorAngleAbs('B', 50, -180*18);
                             brick.WaitForMotor('B');
+                            pause(0.5);
                             brick.MoveMotor('A', -speed);
                             brick.MoveMotor('D', -speed);
-                            pause(1); % Move forward a bit to clear the drop-off zone
-                            disp('Closing forklift');
-                            brick.MoveMotorAngleAbs('B', 50, 180*18);
-                            brick.WaitForMotor('B');
-                            brick.MoveMotor('A', -speed);
-                            brick.MoveMotor('D', -speed);
-                            brick.StopMotor('AD', 'Brake');
+                            pause(0.5); % Move forward a bit to clear the drop-off zone
                             hasPassenger = false;
                         end
                     end
