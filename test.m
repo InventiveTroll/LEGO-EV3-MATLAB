@@ -9,7 +9,8 @@ function test()
     end
 
     % Parameters
-    speed = 50;             
+    speed = 30; 
+    turnSpeed = 50;        
     distanceThreshold = 60;  
     checkPause = 0.3;        
     turnDuration = 0.9;       
@@ -29,7 +30,7 @@ function test()
 
     %brick.SetColorMode(3, 2);
     pastColor = -1;
-    %color = brick.ColorCode(3);
+    color = -1;
     brick.SetColorMode(3, 4);
     %pastColor = brick.ColorRGB(3);
     colorCheck = brick.ColorRGB(3);
@@ -137,16 +138,20 @@ function test()
                     touch2 = brick.TouchPressed(4);
                     %color = brick.ColorCode(3);
                     colorCheck = brick.ColorRGB(3);
-                    disp(color);
+                    disp(colorCheck);
                 catch
                     dist = 999;
                 end
 
                 % convert colors to color code
-                if colorCheck(1) > 100 && colorCheck(2) < 50 && colorCheck(3) < 50
+                if colorCheck(1) > 30 && colorCheck(2) < 30 && colorCheck(3) < 30
                     color = 5;
-                else if colorCheck(1) > 100 && colorCheck(2) < 50 && colorCheck(3) < 50
-                    color = 5;
+                elseif colorCheck(1) > 100 && colorCheck(2) > 80 && colorCheck(3) < 50
+                    color = 4;
+                elseif colorCheck(1) < 50 && colorCheck(2) > 40 && colorCheck(3) > 40
+                    color = 2;
+                elseif colorCheck(1) < 50 && colorCheck(2) > 50 && colorCheck(3) < 50
+                    color = 3;
                 else
                     color = -1;
                 end
@@ -158,12 +163,10 @@ function test()
                             brick.StopMotor('AD', 'Brake');
                             pastColor = color;
                             brick.beep();
-                            colorCheck = true;
                             pause(1);
                             continue;
                         case 4
                             disp('Yellow detected');
-                            colorCheck = true;
                             if ~rideDone
                                 disp('Ride in progress, cannot stop');
                                 pastColor = 4;
@@ -177,7 +180,6 @@ function test()
                             end
                         case 2
                             disp('Blue detected');
-                            colorCheck = true;
                             brick.StopMotor('AD', 'Brake');
                             pastColor = 2;
                             brick.beep();
@@ -198,7 +200,6 @@ function test()
                             continue;
                         case 3
                             disp('Green detected');
-                            colorCheck = true;
                             brick.StopMotor('AD', 'Brake');
                             pastColor = 3;
                             brick.beep();
@@ -211,8 +212,8 @@ function test()
                                 if (~forkliftOpen)
                                     disp('Turning 180 degrees');
                                     brick.StopMotor('AD', 'Brake');
-                                    brick.MoveMotor('A', -speed);
-                                    brick.MoveMotor('D', speed);
+                                    brick.MoveMotor('A', -turnSpeed);
+                                    brick.MoveMotor('D', turnSpeed);
                                     pause(turnDuration * 2);
                                     brick.StopMotor('AD', 'Brake');
                                     pause(0.2);
@@ -239,7 +240,7 @@ function test()
                     end
                 end
     
-                if dist > distanceThreshold
+                if (dist > distanceThreshold)
                     disp(['Opening detected (' num2str(dist) ' cm)']);
                     brick.StopMotor('AD', 'Brake');
                     brick.beep();
@@ -253,8 +254,8 @@ function test()
                     brick.StopMotor('AD', 'Brake');
                     pause(0.2);
 
-                    brick.MoveMotor('A', speed);
-                    brick.MoveMotor('D', -speed);
+                    brick.MoveMotor('A', turnSpeed);
+                    brick.MoveMotor('D', -turnSpeed);
                     pause(turnDuration);
                     brick.StopMotor('AD', 'Brake');
                     pause(0.2);
@@ -276,8 +277,8 @@ function test()
                         pause(0.2);
 
                         % Turn left
-                        brick.MoveMotor('A', -speed);
-                        brick.MoveMotor('D', speed);
+                        brick.MoveMotor('A', -turnSpeed);
+                        brick.MoveMotor('D', turnSpeed);
                         pause(turnDuration);
                         brick.StopMotor('AD', 'Brake');
                         pause(0.2);
@@ -288,15 +289,14 @@ function test()
                             % turn 180 degrees if stuck
                             disp('Stuck detected - Turning 180 degrees');
                             brick.StopMotor('AD', 'Brake');
-                            brick.MoveMotor('A', -speed);
-                            brick.MoveMotor('D', speed);
+                            brick.MoveMotor('A', -turnSpeed);
+                            brick.MoveMotor('D', turnSpeed);
                             pause(turnDuration * 2);
                             brick.StopMotor('AD', 'Brake');
                             pause(0.2);
                             lastDistanceCheck = brick.UltrasonicDist(1);
                         else
                             % Path clear, move forward
-                        disp([dist, lastDistanceCheck]);
 
                         % Adjust motors to make vehicle move straighter
                         if (dist < 5)
@@ -315,7 +315,7 @@ function test()
                             pause(1);
                             lastDistanceCheck = dist;
                         else 
-                            if (lastDistanceCheck - dist) > 1
+                            if (lastDistanceCheck - dist) > 1 || (dist >= 255 && (touch1 || touch2))
                                 brick.StopMotor('AD', 'Brake');
                                 % Moving towards wall, turn slightly away from it
                                 brick.MoveMotor('A', -speed - 10);
