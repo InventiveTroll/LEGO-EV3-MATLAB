@@ -28,11 +28,11 @@ function test()
     lastDistanceCheck = 0;
 
     %brick.SetColorMode(3, 2);
-    %pastColor = -1;
+    pastColor = -1;
     %color = brick.ColorCode(3);
     brick.SetColorMode(3, 4);
-    pastColor = brick.ColorRGB(3);
-    color = brick.ColorRGB(3)
+    %pastColor = brick.ColorRGB(3);
+    colorCheck = brick.ColorRGB(3);
 
     while running
 
@@ -136,30 +136,35 @@ function test()
                     touch1 = brick.TouchPressed(2);
                     touch2 = brick.TouchPressed(4);
                     %color = brick.ColorCode(3);
-                    color = brick.ColorRGB(3);
+                    colorCheck = brick.ColorRGB(3);
                     disp(color);
                 catch
                     dist = 999;
                 end
 
-                if color == 5 && color ~= pastColor
+
+                %if color == 5 && color ~= pastColor
+                if color(1) > 100 && color(2) < 50 && color(3) < 50 && pastColor ~= 5
                     disp('Red detected - Stopping');
                     brick.StopMotor('AD', 'Brake');
-                    pastColor = color;
+                    pastColor = 5;
                     brick.beep();
+                    colorCheck = true;
                     pause(1);
                     continue;
                 end
 
-                if color == 4 && color ~= pastColor
+                %if color == 4 && color ~= pastColor
+                if color(1) > 100 && color(2) > 100 && color(3) < 50 && pastColor ~= 4
                     disp('Yellow detected');
+                    colorCheck = true;
                     if ~rideDone
                         disp('Ride in progress, cannot stop');
-                        pastColor = color;
+                        pastColor = 4;
                         continue;
                     else 
                         brick.StopMotor('AD', 'Brake');
-                        pastColor = color;
+                        pastColor = 4;
                         brick.beep();
                         auto = false;
                         continue;
@@ -167,10 +172,12 @@ function test()
                      
                 end
 
-                if color == 2 && color ~= pastColor
+                % if color == 2 && color ~= pastColor
+                if color(1) < 20 && color(2) > 50 && color(3) > 50 && pastColor ~= 2
                     disp('Blue detected');
+                    colorCheck = true;
                     brick.StopMotor('AD', 'Brake');
-                    pastColor = color;
+                    pastColor = 2;
                     brick.beep();
                     brick.beep();
                     pause(1);
@@ -189,10 +196,13 @@ function test()
                     continue;
                 end
 
-                if color == 3 && color ~= pastColor
+
+                % if color == 3 && color ~= pastColor
+                if color(1) < 40 && color(2) > 50 && color(3) < 40 && pastColor ~= 3
                     disp('Green detected');
+                    colorCheck = true;
                     brick.StopMotor('AD', 'Brake');
-                    pastColor = color;
+                    pastColor = 3;
                     brick.beep();
                     brick.beep();
                     brick.beep();
