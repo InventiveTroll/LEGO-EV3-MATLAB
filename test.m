@@ -1,67 +1,42 @@
 function test()
-    % --- LEGO EV3 Remote Control with Smart Obstacle Avoidance (1 Ultrasonic) ---
-    % Ultrasonic Sensor -> Port 1
-    % Color Sensor -> Port 2 (optional)
-    % Motors -> A (Left), D (Right), B (Auxiliary)
 
     try
         brick = ConnectBrick('ACCESOR');
         brick.beep();
-        disp('✅ Connected to EV3 Brick!');
-    catch ME
-        error('❌ Could not connect to EV3 brick: %s', ME.message);
+        disp('Connected to EV3 Brick!');
+    catch ERR
+        error('Could not connect to EV3 brick: %s', ERR.message);
     end
 
-    % --- Parameters ---
-    speed = 50;               % Driving motor speed
-    distanceThreshold = 60;   % cm — obstacle detection
-    checkPause = 0.3;         % seconds between sensor checks
-    % turnDuration = 0.88;       % time to turn ~90 degrees
-    turnDuration = 0.9;       % time to turn ~90 degrees
-    backupDuration = 0.5;     % reverse duration if stuck
+    % Parameters
+    speed = 50;             
+    distanceThreshold = 60;  
+    checkPause = 0.3;        
+    turnDuration = 0.9;       
+    backupDuration = 0.5;     
     speedIncrement = 10;
 
-    % --- Setup GUI ---
-    hFig = figure('Name', 'EV3 Remote Control', ...
-        'NumberTitle', 'off', ...
-        'MenuBar', 'none', ...
-        'ToolBar', 'none', ...
-        'KeyPressFcn', @keyDown, ...
-        'KeyReleaseFcn', @keyUp, ...
-        'CloseRequestFcn', @onClose);
-
-    axis off;
-    text(0.5, 0.5, ...
-        sprintf(['Use Arrow Keys to Drive\n' ...
-                 'K/L = Forklift Up/Down\n' ...
-                 'W/S = Speed +/-\n' ...
-                 'B = Run Motor B\n' ...
-                 'A = Toggle Auto Mode\n' ...
-                 'Space = Stop | Q = Quit | Esc = Kill Switch\n' ...
-                 'Ultrasonic: Port 1 | Color: Port 2 (optional)']), ...
-        'HorizontalAlignment', 'center', 'FontSize', 12);
-
-    setappdata(hFig, 'key', '');
-    setappdata(hFig, 'running', true);
+    global key;
+    running = true;
+    InitKeyboard();
 
     lastCheck = tic;
-    auto = false; % start in manual mode
+    auto = false;
     forkliftOpen = true;
+    rideDone = false;
     hasPassenger = false;
     lastDistanceCheck = 0;
 
-    % --- Setup Color Sensor ---
-    brick.SetColorMode(3, 2);
-    pastColor = -1;
-    color = brick.ColorCode(3);
+    %brick.SetColorMode(3, 2);
+    %pastColor = -1;
+    %color = brick.ColorCode(3);
+    brick.SetColorMode(3, 4);
+    pastColor = brick.ColorRGB(3);
+    color = brick.ColorRGB(3)
 
-    % --- Main loop ---
-    while ishandle(hFig) && getappdata(hFig, 'running')
-        key = getappdata(hFig, 'key');
+    while running
 
-        
-
-        % --- Manual Control ---
+        % manual
         try
             switch key
                 case 'uparrow'
@@ -81,17 +56,15 @@ function test()
                     brick.MoveMotor('D', -speed);
 
                 case 'k'
-                    % Forklift up (short pulse)
-                    disp('⬆️ Forklift lifting up...');
+                    disp('Forklift lifting up...');
                     brick.MoveMotor('B', -40);
-                    pause(0.4);  % adjust time for lift height
+                    pause(0.4);
                     brick.StopMotor('B', 'Brake');
 
                 case 'l'
-                    % Forklift down (short pulse)
-                    disp('⬇️ Forklift lowering down...');
+                    disp('Forklift lowering down...');
                     brick.MoveMotor('B', 40);
-                    pause(0.4);  % adjust time for lower distance
+                    pause(0.4);
                     brick.StopMotor('B', 'Brake');
                 case '1'
                     if (forkliftOpen)
@@ -129,7 +102,7 @@ function test()
                 case 'escape'
                     brick.StopAllMotors();
                     brick.beep();
-                    disp('🛑 KILL SWITCH ACTIVATED');
+                    disp('Closing...');
                     stopAndCleanup();
                     return;
 
@@ -137,12 +110,12 @@ function test()
                     auto = ~auto;
                     if auto
                         brick.beep();
-                        disp('🤖 AUTO MODE: ON');
+                        disp('Auto');
                     else
                         brick.beep();
                         pause(0.2);
                         brick.beep();
-                        disp('🕹️ AUTO MODE: OFF (Manual Control)');
+                        disp('Manual');
                         brick.StopAllMotors('Brake');
                     end
 
@@ -155,7 +128,6 @@ function test()
             disp(['Motor command failed: ' ME.message]);
         end
 
-        % --- Autonomous Navigation (Right-first Maze Solver) ---
         if auto
             if toc(lastCheck) > checkPause
                 lastCheck = tic;
@@ -163,7 +135,9 @@ function test()
                     dist = brick.UltrasonicDist(1);
                     touch1 = brick.TouchPressed(2);
                     touch2 = brick.TouchPressed(4);
-                    color = brick.ColorCode(3);
+                    %color = brick.ColorCode(3);
+                    color = brick.ColorRGB(3);
+                    disp(color);
                 catch
                     dist = 999;
                 end
@@ -179,15 +153,15 @@ function test()
 
                 if color == 4 && color ~= pastColor
                     disp('Yellow detected');
-                    if hasPassenger
-                        disp('Passenger inside, cannot stop ride.');
+                    if ~rideDone
+                        disp('Ride in progress, cannot stop');
                         pastColor = color;
                         continue;
                     else 
                         brick.StopMotor('AD', 'Brake');
                         pastColor = color;
                         brick.beep();
-                        pause(1);
+                        auto = false;
                         continue;
                     end
                      
@@ -246,6 +220,7 @@ function test()
                             brick.MoveMotor('D', -speed);
                             pause(0.5); % Move forward a bit to clear the drop-off zone
                             hasPassenger = false;
+                            rideDone = true;
                         end
                     end
                     pause(1);
@@ -258,7 +233,7 @@ function test()
                     brick.beep();
                     pause(0.2);
     
-                    % --- Try turning right first ---
+                    % Try turning right first
                     brick.StopMotor('AD', 'Brake');
                     brick.MoveMotor('A', -speed);
                     brick.MoveMotor('D', -speed);
@@ -281,14 +256,14 @@ function test()
                     if touch1 && touch2
                         pause(0.5); % Make sure robot is pushed up against the wall
 
-                        % --- Back up first ---
+                        % Back up first
                         brick.MoveMotor('A', speed);
                         brick.MoveMotor('D', speed);
                         pause(backupDuration);
                         brick.StopMotor('AD', 'Brake');
                         pause(0.2);
 
-                        % --- Turn left ---
+                        % Turn left
                         brick.MoveMotor('A', -speed);
                         brick.MoveMotor('D', speed);
                         pause(turnDuration);
@@ -322,7 +297,7 @@ function test()
 
                         if (dist - lastDistanceCheck) > 1
                             brick.StopMotor('AD', 'Brake');
-                            % Veering away from wall, turn slightly towards it
+                            % Moving away from wall, turn slightly towards it
                             brick.MoveMotor('A', -speed + 10);
                             brick.MoveMotor('D', -speed - 10);
                             pause(1);
@@ -330,7 +305,7 @@ function test()
                         else 
                             if (lastDistanceCheck - dist) > 1
                                 brick.StopMotor('AD', 'Brake');
-                                % Veering towards wall, turn slightly away from it
+                                % Moving towards wall, turn slightly away from it
                                 brick.MoveMotor('A', -speed - 10);
                                 brick.MoveMotor('D', -speed + 10);
                                 pause(1);
@@ -350,34 +325,16 @@ function test()
 
         pause(0.05);
     end
-
-    % --- Nested helper functions ---
-    function keyDown(~, event)
-        setappdata(hFig, 'key', event.Key);
-    end
-
-    function keyUp(~, ~)
-        setappdata(hFig, 'key', '');
-    end
-
-    function onClose(~, ~)
-        stopAndCleanup();
-    end
-
+    
     function stopAndCleanup()
-        if isvalid(hFig)
-            setappdata(hFig, 'running', false);
-            try
-                brick.StopAllMotors();
-                brick.beep();
-                disp('Motors stopped and brick cleaned up.');
-            catch
-            end
-            pause(0.2);
-            close(hFig);
-        end
+        brick.StopAllMotors();
+        brick.beep();
+        disp('Motors stopped and brick cleaned up');
         clear brick;
-        disp('🔌 Disconnected from EV3 safely.');
+        disp('Disconnected from EV3');
+        CloseKeyboard();
     end
 end
+
+
 
